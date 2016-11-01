@@ -54,13 +54,12 @@ type Snake = Array Point
 type Model = {xd :: Int, yd :: Int, size :: Int, mouse:: Point, snake :: Snake, dir :: Point, alive :: Boolean, prev :: Maybe Point}
 -- prev is the last place the snake was. This is to erase easily.
 
-
 init :: forall e. Eff (random :: RANDOM | e) Model
 init = do
   let psize = 10
   let xmax = 25
   let ymax = 25
-  ms <- evalGenD $ untilM (\p -> p /= Point {x:1, y:1}) (randomPoint' xmax ymax)
+  ms <- evalGenD $ untilM (\p -> p /= Point {x:1, y:1}) (randomPoint xmax ymax)
   pure {xd : xmax, yd : ymax, size : psize , mouse : ms, snake : [Point {x:1,y:1}], dir: Point {x:1,y:0}, alive : true, prev : Nothing}
 
 inBounds :: Point -> Model -> Boolean
@@ -99,8 +98,7 @@ step dir m =
         if (hd == m.mouse) 
         then 
             do 
-              newMouse <- untilM (\pt -> not (pt `elem` s || pt == hd)) (randomPoint' m.xd m.yd)
---              log "new mouse"
+              newMouse <- untilM (\pt -> not (pt `elem` s || pt == hd)) (randomPoint m.xd m.yd)
               pure $ m { snake = hd : s
                        , mouse = newMouse
                        , dir = d
@@ -122,26 +120,11 @@ inputDir =
 --note y goes DOWN
     in
       map4 f <$> (keyPressed 37) <*> (keyPressed 38) <*> (keyPressed 40) <*> (keyPressed 39)
+
 --(dom :: DOM | e)
 input :: Eff _ (Signal Point)
 input = sampleOn (fps 20.0) <$> inputDir
 --(random :: RANDOM, dom :: DOM)
-
-{-
-main :: Eff (canvas :: CANVAS) Unit
-main = void $ unsafePartial do
-  Just canvas <- getCanvasElementById "canvas"
-  ctx <- getContext2D canvas
-
-  setFillStyle "#0000FF" ctx
-
-  fillPath ctx $ rect ctx
-    { x: 250.0
-    , y: 250.0
-    , w: 100.0
-    , h: 100.0
-    }
--}
 
 main :: Eff _ Unit
 main = --onDOMContentLoaded 
@@ -154,17 +137,9 @@ main = --onDOMContentLoaded
       -- need to be in effect monad in order to get a keyboard signal
       game <- foldpR step gameStart dirSignal
       runSignal (map render game)
--- map render (foldp step (init 0) input)
 
-randomPoint :: forall e. Int -> Int -> Eff (random :: RANDOM | e) Point
+randomPoint :: Int -> Int -> Gen Point
 randomPoint xmax ymax = 
-    do
-      x <- randomInt 1 xmax
-      y <- randomInt 1 ymax
-      pure $ Point {x:x,y:y}
-
-randomPoint' :: Int -> Int -> Gen Point
-randomPoint' xmax ymax = 
     do
       x <- chooseInt 1 xmax
       y <- chooseInt 1 ymax
@@ -174,7 +149,6 @@ fps :: Time -> Signal Time
 fps x = every (second/x)
 
 --Utility functions
-
 ifs:: forall a. Array (Tuple Boolean a) -> a -> a
 ifs li z = case uncons li of
              Just {head : Tuple b y, tail : tl} -> if b then y else ifs tl z
@@ -258,11 +232,11 @@ render m =
         for s (\x -> colorSquare m.size x snakeColor ctx)
         --mouse
         colorSquare m.size (m.mouse) mouseColor ctx
-        log ("Mouse: " <> show (m.mouse))
+{-        log ("Mouse: " <> show (m.mouse))
         log ("Snake: " <> show s)
         log ("Direction: " <> show m.dir)
         log ("Alive? " <> show m.alive)
-        log ("Head == mouse? " <> show (head' s == m.mouse))
+        log ("Head == mouse? " <> show (head' s == m.mouse))-}
         pure unit
 
 bindR :: forall a b m. (Monad m) => m a -> m b -> m b
