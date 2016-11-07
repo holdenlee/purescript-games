@@ -13,19 +13,15 @@ import Partial.Unsafe (unsafePartial)
 --MODEL
 type Model = Int
 
+--UPDATE
+step :: Int -> Model -> Model
+step dir m = m + dir
+
+--VIEW
 logShow :: forall e. Model -> Eff (console :: CONSOLE | e) Unit
 logShow m = log ("m: " <> (show m))
 
-step :: Int -> Model -> Model
-step dir m = m + dir
-{-
-  do
-    m <- m'
-    log ("m: " <> (show m))
-    pure (m + dir)
--}
-
---SIGNALS
+--SIGNAL
 inputDir :: Eff _ (Signal Int)
 inputDir = 
     let 

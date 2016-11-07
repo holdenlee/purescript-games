@@ -1,4 +1,4 @@
-module Snake where
+module SnakeS where
 
 import Prelude -- must be explicitly imported
 import Control.Monad.Eff (Eff)
@@ -16,7 +16,7 @@ import Graphics.Canvas (CANVAS, closePath, lineTo, moveTo, fillPath,
                         setFillStyle, arc, rect, getContext2D,
                         getCanvasElementById, Context2D, Rectangle)
 import Partial.Unsafe (unsafePartial)
-import Signal (Signal, runSignal, foldp, sampleOn, map4)
+import Signal (Signal, runSignal, foldp, sampleOn, map4, merge, filterMap)
 import Signal.DOM (keyPressed)
 import Signal.Time (Time, second, every)
 import Test.QuickCheck.Gen -- for randomness
@@ -166,14 +166,11 @@ fps x = every (second/x)
 main :: Eff _ Unit
 main = --onDOMContentLoaded 
     void $ unsafePartial do
-      --draw the board
-      gameStart <- init
-      render gameStart
-      -- create the signals
-      dirSignal <- input
+      --create the signals
+      signal2 <- input2
       -- need to be in effect monad in order to get a keyboard signal
-      game <- foldpR step gameStart dirSignal
-      runSignal (map renderStep game)
+      game <- foldpR step2 start2 signal2
+      runSignal (map render2 game)
 
 --Utility functions
 ifs:: forall a. Array (Tuple Boolean a) -> a -> a
@@ -207,3 +204,37 @@ snakeColor = white
 bgColor = black
 mouseColor = red
 wallColor = green
+
+-- Adding start game capability
+
+data Input = Input1 | Input2 Point
+
+data Game  = Waiting | Ingame Model
+
+input2 :: Eff _ (Signal Input)
+input2 = do 
+  space <- keyPressed 32
+  inp <- input
+  pure $ merge (filterMap (\x -> if x then Just Input1 else Nothing) Input1 space)
+               (map Input2 inp)
+
+step2 :: Partial => Input -> Game -> Gen Game
+step2 inp g = 
+    case Tuple inp g of
+      Tuple Input1 Waiting -> map Ingame init' 
+      Tuple (Input2 dir) (Ingame m) ->
+          do
+            m' <- step dir m
+            if m'.alive 
+              then pure $ Ingame m'
+              else pure Waiting
+      _ -> pure g
+
+render2 :: forall eff. Partial => Game -> (Eff _ Unit)
+render2 g = 
+    case g of
+      Waiting -> pure unit
+      Ingame m -> render m
+
+start2 :: Game
+start2 = Waiting
