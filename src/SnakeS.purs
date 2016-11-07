@@ -58,7 +58,7 @@ checkOK pt m =
   let
     s = m.snake
   in
-    m.alive && (inBounds pt m) && not (pt `elem` s)
+    m.alive && (inBounds pt m) && not (pt `elem` (body s))
 
 step :: Partial => Point -> Model -> Gen Model --need 2nd argument to be Eff for foldp
 step dir m = 
