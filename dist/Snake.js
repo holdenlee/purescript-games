@@ -13884,13 +13884,13 @@ var colorSquare = function (size) {
         };
     };
 };
-var checkOK = function (pt) {
-    return function (m) {
-        return m.alive && (inBounds(pt)(m) && !Data_Foldable.elem(Data_Foldable.foldableArray)(Data_Tuple.eqTuple(Data_Eq.eqInt)(Data_Eq.eqInt))(pt)(m.snake));
-    };
-};
 var body = function (li) {
     return Data_Array.slice(0)(Data_Array.length(li) - 1)(li);
+};
+var checkOK = function (pt) {
+    return function (m) {
+        return m.alive && (inBounds(pt)(m) && !Data_Foldable.elem(Data_Foldable.foldableArray)(Data_Tuple.eqTuple(Data_Eq.eqInt)(Data_Eq.eqInt))(pt)(body(m.snake)));
+    };
 };
 var step = function (dictPartial) {
     return function (dir) {
