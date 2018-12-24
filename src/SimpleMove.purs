@@ -1,8 +1,8 @@
 module SimpleMove where
 
 import Prelude
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Effect (Effect)
+import Effect.Console (log)
 import Data.Functor
 import Data.Int
 import Signal (Signal, runSignal, foldp, sampleOn, map2)
@@ -18,11 +18,11 @@ step :: Int -> Model -> Model
 step dir m = m + dir
 
 --VIEW
-logShow :: forall e. Model -> Eff (console :: CONSOLE | e) Unit
+logShow :: forall e. Model -> Effect Unit
 logShow m = log ("m: " <> (show m))
 
 --SIGNAL
-inputDir :: Eff _ (Signal Int)
+inputDir :: Effect (Signal Int)
 inputDir = 
     let 
         f = \l r -> if l 
@@ -33,11 +33,11 @@ inputDir =
     in
       map2 f <$> (keyPressed 37) <*> (keyPressed 39)
 
-input :: Eff _ (Signal Int)
+input :: Effect (Signal Int)
 input = sampleOn (every second) <$> inputDir
 
 --MAIN
-main :: Eff _ Unit
+main :: Effect Unit
 main =
     unsafePartial do
       dirSignal <- input

@@ -1,39 +1,10 @@
-# Complied source #
-###################
-
-*.exe
-*.hi
-*.o
-
-# LaTeX auxiliary files #
-#########################
-
-*.aux
-*.idx
-*.ilg
-*.ind
-*.log
-*.nlo
-*.nls
-*.out
-*.ptc
-*.ptx
-*.gz
-
-# Miscellaneous files #
-#######################
-
-*.db
-*~
-*#
-*.webpack.js
-.psci
-
-# Folders #
-###########
-
-elm-stuff
-.pulp-cache
-bower_components
-dist
-output
+/bower_components/
+/node_modules/
+/.pulp-cache/
+/output/
+/generated-docs/
+/.psc-package/
+/.psc*
+/.purs*
+/.psa*
+*.purs-old

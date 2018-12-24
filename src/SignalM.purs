@@ -1,8 +1,8 @@
 module SignalM where
 
 import Prelude
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Random (RANDOM)
+import Effect (Effect)
+--import Effect.Random (RANDOM)
 import Control.Monad.State
 import Data.Tuple
 import Test.QuickCheck
@@ -18,13 +18,13 @@ foldpR' :: forall a b. GenState -> (a -> b -> Gen b) -> b -> (Signal a) -> (Sign
 foldpR' = foldpM runGen
 -- $ runState . unGen
 
-foldpR :: forall a b e. (a -> b -> Gen b) -> b -> (Signal a) -> Eff (random :: RANDOM | e) (Signal b)
+foldpR :: forall a b e. (a -> b -> Gen b) -> b -> (Signal a) -> Effect (Signal b)
 foldpR f st sig = 
     do
       seed <- randomSeed
       pure $ foldpR' { newSeed : seed, size : 536870911} f st sig
 
-evalGenD :: forall a e. Gen a -> Eff (random :: RANDOM | e) a
+evalGenD :: forall a e. Gen a -> Effect a
 evalGenD g = 
     do
       seed <- randomSeed

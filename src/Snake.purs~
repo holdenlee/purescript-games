@@ -1,0 +1,53 @@
+module Main where
+
+import Prelude
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Data.List (..)
+import Data.Maybe (..)
+
+type Point = {x :: Int, y :: Int}
+
+(+.) :: Point -> Point -> Point
+(+.) v1 v2 = {x = v1.x + v2.x, y = v1.y + v2.y}
+
+type Snake = List Point
+
+type Model = {xd :: Int, yd :: Int, size :: Int, mouse:: Point, snake :: Snake, dir :: Point, alive :: Bool}
+
+inBounds :: Point -> Model -> Bool
+inBounds p m = 
+  (p.x > 0) && (p.y > 0) && (p.x <= m.xd) && (p.y <= m.yd)
+
+checkOK :: Point -> Model -> Bool
+checkOK pt m = 
+  let
+    s = m.snake
+  in
+    m.alive && (inBounds pt m) && not (pt `member` s)
+
+step :: forall e. Point -> Model -> Eff (random :: RANDOM | e) Model
+step dir m = 
+  let
+    d = if dir /= (0,0)
+        then dir
+        else m.dir
+    s = m.snake
+    hd = (head s +. d)
+  in
+    if checkOK hd m
+    then 
+        if (hd == m.mouse) 
+        then 
+            let {-(a -> Bool) -> Generator a -> Seed -> (a, Seed)-}
+
+                (pt, s') = genUntil (\pt -> not (pt `member` s || pt == hd)) (pair (int 1 m.xd) (int 1 m.yd)) m.seed
+            in 
+              {m | snake <- push hd s
+                 , seed <- s'
+                 , mouse <- pt
+                 , dir <- d}
+        else {m | snake <- push hd (body s), dir <- d}
+    else {m | alive <- False}
+
+main :: forall e. Eff (console :: CONSOLE | e) Unit

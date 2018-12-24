@@ -1,0 +1,23 @@
+{
+  "name": "basic-games",
+  "set": "psc-0.12.1",
+  "source": "https://github.com/purescript/package-sets.git",
+  "depends": [
+    "canvas",
+    "console",
+    "effect",
+    "foldable-traversable",
+    "generics-rep",
+    "integers",
+    "lists",
+    "maybe",
+    "partial",
+    "prelude",
+    "psci-support",
+    "quickcheck",
+    "random",
+    "signal",
+    "transformers",
+    "tuples"
+  ]
+}

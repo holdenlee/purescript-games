@@ -1,18 +1,18 @@
 module Snake where
 
 import Prelude -- must be explicitly imported
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Random (RANDOM, randomInt)
+import Effect (Effect)
+import Effect.Console (log)
+import Effect.Random (randomInt)
 import Data.Array (length, uncons, slice, (:), last)
 import Data.Array.Partial (head)
 import Data.Functor
-import Data.Generic
+import Data.Generic.Rep
 import Data.Int
 import Data.Maybe
 import Data.Traversable
 import Data.Tuple
-import Graphics.Canvas (CANVAS, closePath, lineTo, moveTo, fillPath,
+import Graphics.Canvas (closePath, lineTo, moveTo, fillPath,
                         setFillStyle, arc, rect, getContext2D,
                         getCanvasElementById, Context2D, Rectangle)
 import Partial.Unsafe (unsafePartial)
@@ -45,7 +45,7 @@ init' = do
   ms <- untilM (\p -> p /= Tuple 1 1) (randomPoint xmax ymax)
   pure {xd : xmax, yd : ymax, size : 10, mouse : ms, snake : [Tuple 1 1], dir: Tuple 1 0, alive : true, prev : Nothing}
 
-init :: forall e. Eff (random :: RANDOM | e) Model
+init :: Effect Model
 init = evalGenD init'
 
 --UPDATE
@@ -88,19 +88,19 @@ step dir m =
       else (pure $ m { alive = false, prev = Nothing})
 
 --VIEW
-colorSquare :: forall eff. Int -> Point -> String -> Context2D -> Eff (canvas :: CANVAS | eff) Context2D
+colorSquare :: Int -> Point -> String -> Context2D -> Effect Unit
 colorSquare size (Tuple x y) color ctx = do
-  setFillStyle color ctx
+  setFillStyle ctx color
   fillPath ctx $ rect ctx $ square size x y
 
 square :: Int -> Int -> Int -> Rectangle
 square size x y = { x: toNumber $ size*x
                   , y: toNumber $ size*y
-                  , w: toNumber $ size
-                  , h: toNumber $ size
+                  , width: toNumber $ size
+                  , height: toNumber $ size
                   }
 
-renderStep :: forall eff. Partial => Model -> Eff (canvas :: CANVAS | eff) Unit
+renderStep :: Partial => Model -> Effect Unit
 renderStep m = 
   void do
         let s=m.snake
@@ -115,7 +115,7 @@ renderStep m =
         --make use of the fact: either we draw the mouse or erase the tail, not both, at any one step
 
 --forall eff. Partial => Model -> (Eff (canvas :: CANVAS | eff) Unit)
-render :: forall eff. Partial => Model -> (Eff _ Unit)
+render :: Partial => Model -> (Effect Unit)
 render m = 
   void do
         let s = m.snake
@@ -123,30 +123,30 @@ render m =
         Just canvas <- getCanvasElementById "canvas"
         ctx <- getContext2D canvas
         --walls
-        setFillStyle wallColor ctx
+        setFillStyle ctx wallColor
         fillPath ctx $ rect ctx
                      { x: 0.0
                      , y: 0.0
-                     , w: toNumber $ size*(m.xd + 2)
-                     , h: toNumber $ size*(m.yd + 2)
+                     , width: toNumber $ size*(m.xd + 2)
+                     , height: toNumber $ size*(m.yd + 2)
                      }
         --interior
-        setFillStyle bgColor ctx
+        setFillStyle ctx bgColor
         fillPath ctx $ rect ctx
                      { x: toNumber $ size
                      , y: toNumber $ size
-                     , w: toNumber $ size*(m.xd)
-                     , h: toNumber $ size*(m.yd)
+                     , width: toNumber $ size*(m.xd)
+                     , height: toNumber $ size*(m.yd)
                      }
         --snake 
-        for s (\x -> colorSquare m.size x snakeColor ctx)
+        _ <- for s (\x -> colorSquare m.size x snakeColor ctx)
         --mouse
         colorSquare m.size (m.mouse) mouseColor ctx
 
 
 --SIGNALS
 --(dom :: DOM | e)
-inputDir :: Eff _ (Signal Point)
+inputDir :: Effect (Signal Point)
 inputDir = 
     let 
         f = \l u d r -> ifs [Tuple l $ Tuple (-1) 0, Tuple u $ Tuple 0 (-1), Tuple d $ Tuple 0 1, Tuple r $ Tuple 1 0] $ Tuple 0 0
@@ -155,7 +155,7 @@ inputDir =
       map4 f <$> (keyPressed 37) <*> (keyPressed 38) <*> (keyPressed 40) <*> (keyPressed 39)
 
 --(dom :: DOM | e)
-input :: Eff _ (Signal Point)
+input :: Effect (Signal Point)
 input = sampleOn (fps 20.0) <$> inputDir
 
 fps :: Time -> Signal Time
@@ -163,7 +163,7 @@ fps x = every (second/x)
 
 --MAIN
 --(random :: RANDOM, dom :: DOM)
-main :: Eff _ Unit
+main :: Effect Unit
 main = --onDOMContentLoaded 
     void $ unsafePartial do
       --draw the board
